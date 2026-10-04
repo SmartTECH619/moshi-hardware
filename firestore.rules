@@ -1,0 +1,65 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // An admin is a signed-in user that has a document users/{uid} with role == "admin".
+    // That document can only be created by hand in the Firebase Console (see README).
+    function isAdmin() {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    function validProduct(d) {
+      return d.name is string && d.name.size() > 0 && d.name.size() <= 120
+        && d.price is number && d.price >= 0
+        && d.isAvailable is bool;
+    }
+
+    function validOrder(d, id) {
+      return d.keys().hasOnly(['orderNumber','customerName','phone','location','notes',
+                               'orderType','items','subtotal','deliveryFee','total','status','createdAt'])
+        && d.orderNumber == id
+        && d.status == 'PENDING'
+        && d.orderType in ['delivery', 'pickup']
+        && d.customerName is string && d.customerName.size() >= 2 && d.customerName.size() <= 100
+        && d.phone is string && d.phone.matches('^\\+255[67][0-9]{8}$')
+        && d.location is string && d.location.size() <= 300
+        && d.notes is string && d.notes.size() <= 500
+        && d.items is list && d.items.size() > 0 && d.items.size() <= 50
+        && d.subtotal is number && d.subtotal >= 0
+        && d.deliveryFee == 0
+        && d.total == d.subtotal
+        && d.createdAt == request.time;
+    }
+
+    // Products: public catalogue (so "Out of stock" can be shown), only admins write.
+    match /products/{id} {
+      allow read: if true;
+      allow create, update: if isAdmin() && validProduct(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    // Orders: customers can only CREATE. They cannot read, change or delete orders.
+    match /orders/{id} {
+      allow create: if validOrder(request.resource.data, id);
+      allow read, update: if isAdmin();
+      allow delete: if false;
+    }
+
+    // Daily counter used to build order numbers like MH-20261004-001.
+    // Anyone may read it and bump it by exactly 1. It only holds a number.
+    match /counters/{day} {
+      allow get: if true;
+      allow create: if request.resource.data.keys().hasOnly(['count']) && request.resource.data.count == 1;
+      allow update: if request.resource.data.keys().hasOnly(['count'])
+                    && request.resource.data.count == resource.data.count + 1;
+    }
+
+    // Users: a signed-in user may read only their own document. Nobody can write from the app.
+    match /users/{uid} {
+      allow get: if request.auth != null && request.auth.uid == uid;
+      allow list, write: if false;
+    }
+  }
+}

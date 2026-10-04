@@ -15,15 +15,15 @@ export const EmptyState = ({ title, text, children, icon: Icon = PackageOpen }) 
   </div>
 );
 
-export const ErrorState = ({ message, onRetry }) => (
+export const ErrorState = ({ message, onRetry, retryLabel = 'Try again' }) => (
   <div className="flex flex-col items-center px-4 py-14 text-center">
     <AlertTriangle size={44} className="text-red-400" />
     <p className="mt-3 max-w-sm text-sm text-slate-600">{message}</p>
-    {onRetry && <button className="btn-outline mt-4" onClick={onRetry}>Try again</button>}
+    {onRetry && <button className="btn-outline mt-4" onClick={onRetry}>{retryLabel}</button>}
   </div>
 );
 
-export function ConfirmDialog({ open, title, message, confirmLabel = 'Confirm', danger, busy, onConfirm, onCancel }) {
+export function ConfirmDialog({ open, title, message, confirmLabel = 'Confirm', cancelLabel = 'Cancel', danger, busy, onConfirm, onCancel }) {
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-4 sm:items-center" role="dialog" aria-modal="true">
@@ -31,7 +31,7 @@ export function ConfirmDialog({ open, title, message, confirmLabel = 'Confirm', 
         <h3 className="text-lg font-semibold">{title}</h3>
         <p className="mt-1 text-sm text-slate-600">{message}</p>
         <div className="mt-5 flex justify-end gap-2">
-          <button className="btn-outline" onClick={onCancel} disabled={busy}>Cancel</button>
+          <button className="btn-outline" onClick={onCancel} disabled={busy}>{cancelLabel}</button>
           <button className={danger ? 'btn-danger' : 'btn-primary'} onClick={onConfirm} disabled={busy}>
             {busy && <Loader2 size={16} className="animate-spin" />}{confirmLabel}
           </button>

@@ -11,8 +11,25 @@ export const businessWaLink = (text = 'Hello Moshi Hardware, I would like to ask
 
 const itemsText = (items) => items.map((i) => `${i.name} × ${i.quantity}`).join('\n');
 
-// Message the customer sends to the business after ordering
-export function customerOrderMessage(order) {
+// Message the customer sends to the business after ordering (English or Swahili)
+export function customerOrderMessage(order, lang = 'en') {
+  const delivery = order.orderType === 'delivery';
+  if (lang === 'sw') {
+    return `Habari Moshi Hardware,
+
+Nimeweka oda.
+
+Oda: ${order.orderNumber}
+
+Mteja: ${order.customerName}
+
+Bidhaa:
+${itemsText(order.items)}
+
+Jumla: ${formatTZS(order.total)}${delivery ? ' (gharama ya usafirishaji itathibitishwa)' : ''}
+
+Eneo: ${order.location}`;
+  }
   return `Hello Moshi Hardware,
 
 I have placed an order.
@@ -24,12 +41,13 @@ Customer: ${order.customerName}
 Products:
 ${itemsText(order.items)}
 
-Total: ${formatTZS(order.total)}${order.orderType === 'delivery' ? ' (delivery fee to be confirmed)' : ''}
+Total: ${formatTZS(order.total)}${delivery ? ' (delivery fee to be confirmed)' : ''}
 
 Location: ${order.location}`;
 }
 
 // Message the admin sends to the customer
-export function adminToCustomerMessage(order) {
+export function adminToCustomerMessage(order, lang = 'en') {
+  if (lang === 'sw') return `Habari ${order.customerName}, huyu ni Moshi Hardware kuhusu oda yako ${order.orderNumber}.`;
   return `Hello ${order.customerName}, this is Moshi Hardware about your order ${order.orderNumber}.`;
 }

@@ -16,9 +16,9 @@ export async function placeOrder({ customerName, phone, location, notes, orderTy
   const items = [];
   for (const ci of cartItems) {
     const snap = await getDoc(doc(db, 'products', ci.productId));
-    if (!snap.exists()) throw new Error(`"${ci.name}" is no longer available. Please remove it from your cart.`);
+    if (!snap.exists()) throw Object.assign(new Error('missing'), { code: 'PRODUCT_MISSING', productName: ci.name });
     const p = snap.data();
-    if (!p.isAvailable) throw new Error(`"${p.name}" is currently unavailable. Please remove it from your cart.`);
+    if (!p.isAvailable) throw Object.assign(new Error('unavailable'), { code: 'PRODUCT_UNAVAILABLE', productName: p.name });
     items.push({ productId: snap.id, name: p.name, price: p.price, unit: p.unit || '', quantity: ci.quantity });
   }
   const subtotal = items.reduce((s, i) => s + i.price * i.quantity, 0);

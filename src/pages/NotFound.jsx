@@ -1,6 +1,8 @@
 import { Link } from 'react-router-dom';
 import { EmptyState } from '../components/ui';
+import { useLang } from '../context/LanguageContext';
 
 export default function NotFound() {
-  return <EmptyState title="Page not found" text="The page you are looking for does not exist."><Link to="/" className="btn-primary">Go home</Link></EmptyState>;
+  const { t } = useLang();
+  return <EmptyState title={t('pageNotFound')} text={t('pageNotFoundText')}><Link to="/" className="btn-primary">{t('goHome')}</Link></EmptyState>;
 }
